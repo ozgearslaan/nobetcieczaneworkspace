@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <title>Example</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.0.1/dist/leaflet.css"
+    />
+    <script src="https://unpkg.com/leaflet@1.0.1/dist/leaflet-src.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+  </head>
+  <body>
+    <style>
+      html,
+      body {
+        height: 100%;
+      }
+
+      .parent {
+        display: flex;
+        flex-flow: column;
+        height: 100%;
+      }
+
+      .child-top {
+        flex: 0 1 50px;
+        background-color: #175b81;
+        color: white;
+      }
+
+      .child-bottom {
+        flex: 1 1 auto;
+      }
+
+      #txtboxes {
+        display: inline-block;
+        text-align: right;
+        margin: auto;
+        width: 95%;
+        padding: 10px;
+      }
+    </style>
+    <div class="parent">
+      <div class="child-top" id="panel">
+        <div id="txtboxes">
+          Select on click within
+          <select id="miles">
+            <option value="1">1 Miles</option>
+            <option value="2">2 Miles</option>
+            <option value="3">3 Miles</option>
+            <option value="5">5 Miles</option>
+          </select>
+        </div>
+      </div>
+      <div class="child-bottom" id="map"></div>
+    </div>
+
+    
+    <script>
+      var url = "bugun_nobetci.json";
+      var url2 = "dun_nobetci.json";
+      var url3 = "yarin_nobetci.son";
+      var theMarker;
+      var theCircle;
+      var geojsonLayer;
+
+      var map = L.map("map").setView([39.02771, 40], 6);
+
+      var osm = new L.tileLayer("http://{s}.tile.osm.org/{z}/{x}/{y}.png", {
+        attribution:
+          '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
+      }).addTo(map);
+
+      sites = L.geoJson(null, {
+        pointToLayer: function (feature, latlng) {
+          return L.circleMarker(latlng, {
+            radius: 4,
+            color: "red",
+            stroke: true,
+            weight: 7,
+            fillOpcaity: 1,
+          });
+        },
+
+        onEachFeature: function (feature, layer) {
+          layer.bindTooltip(feature.properties.eczaneadi + '</br>' + 'ECZANE' +'</br>'+feature.properties.eczaneilceadi+'</br>'+feature.properties.eczaneadres+'</br>'+ feature.properties.baslangic+'</br>'+feature.properties.bitis);
+
+          layer.on("click", function (e) {
+            lat = e.latlng.lat;
+            lon = e.latlng.lng;
+            ProcessClick(lat, lon);
+          });
+        },
+      });
+
+      $.getJSON(url, function (data) {
+        sites.addData(data);
+      });
+			sites.addTo(map);
+
+      sites2 = L.geoJson(null, {
+        pointToLayer: function (feature, latlng) {
+          return L.circleMarker(latlng, {
+            radius: 4,
+            color: "red",
+            stroke: true,
+            weight: 7,
+            fillOpcaity: 1,
+          });
+        },
+
+        onEachFeature: function (feature, layer) {
+          layer.bindTooltip(feature.properties.eczaneadi + '</br>' + 'ECZANE' +'</br>'+feature.properties.eczaneilceadi+'</br>'+feature.properties.eczaneadres+'</br>'+ feature.properties.baslangic+'</br>'+feature.properties.bitis);
+
+          layer.on("click", function (e) {
+            lat = e.latlng.lat;
+            lon = e.latlng.lng;
+            ProcessClick(lat, lon);
+          });
+        },
+      });
+
+      $.getJSON(url2, function (data) {
+        sites2.addData(data);
+      });
+			sites2.addTo(map);
+
+      sites3 = L.geoJson(null, {
+        pointToLayer: function (feature, latlng) {
+          return L.circleMarker(latlng, {
+            radius: 4,
+            color: "red",
+            stroke: true,
+            weight: 7,
+            fillOpcaity: 1,
+          });
+        },
+
+        onEachFeature: function (feature, layer) {
+          layer.bindTooltip(feature.properties.eczaneadi + '</br>' + 'ECZANE' +'</br>'+feature.properties.eczaneilceadi+'</br>'+feature.properties.eczaneadres+'</br>'+ feature.properties.baslangic+'</br>'+feature.properties.bitis);
+
+          layer.on("click", function (e) {
+            lat = e.latlng.lat;
+            lon = e.latlng.lng;
+            ProcessClick(lat, lon);
+          });
+        },
+      });
+
+      $.getJSON(url3, function (data) {
+        sites3.addData(data);
+      });
+			sites3.addTo(map);
+
+
+      var baseMaps = {
+        "Open StreetMap": osm,
+      };
+
+      var overlayMaps = {
+        Bugun: sites,
+        Dun : sites2,
+        Yarin : sites3,
+      };
+
+      L.control.layers(baseMaps, overlayMaps).addTo(map);
+
+      map.on("click", function (e) {
+        lat = e.latlng.lat;
+        lon = e.latlng.lng;
+        ProcessClick(lat, lon);
+      });
+
+      function ProcessClick(lat, lon) {
+        console.log("You clicked the map at LAT: " + lat + " and LONG: " + lon);
+        if (theCircle != undefined) {
+          map.removeLayer(theCircle);
+        }
+        if (theMarker != undefined) {
+          map.removeLayer(theMarker);
+        }
+        if (geojsonLayer != undefined) {
+          map.removeLayer(geojsonLayer);
+        }
+
+        theMarker = L.marker([lat, lon]).addTo(map);
+        SelectPoints(lat, lon);
+      }
+
+      var selPts = [];
+
+      function SelectPoints(lat, lon) {
+        var dist = document.getElementById("miles").value;
+
+        xy = [lat, lon];
+
+        var theRadius = parseInt(dist) * 1609.34;
+
+        selPts.length = 0;
+
+        sites.eachLayer(function (layer) {
+          layer_lat_long = layer.getLatLng();
+
+          distance_from_centerPoint = layer_lat_long.distanceTo(xy);
+
+          if (distance_from_centerPoint <= theRadius) {
+            selPts.push(layer.feature);
+          }
+        });
+
+        theCircle = L.circle(xy, theRadius, {
+          color: "purple",
+          fillOpacity: 0,
+          opacity: 1,
+        }).addTo(map);
+
+        geojsonLayer = L.geoJson(selPts, {
+          pointToLayer: function (feature, latlng) {
+            return L.circleMarker(latlng, {
+              radius: 4,
+              color: "green",
+              stroke: true,
+              weight: 7,
+              fillOpcaity: 1,
+            });
+          },
+        });
+        map.addLayer(geojsonLayer);
+        var GeoJS = { type: "FeatureCollection", features: selPts };
+        console.log(GeoJS.features.length + " Selected features");
+        console.log(JSON.stringify(GeoJS));
+      }
+    </script>
+  </body>
+</html>
